@@ -1,4 +1,4 @@
-package net.ejrbuss.shelebrate;
+package net.ejrbuss;
 
 import static org.junit.Assert.assertTrue;
 

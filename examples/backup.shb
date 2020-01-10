@@ -1,0 +1,58 @@
+#!/bin/shelebrate
+    
+# This bash script is used to backup a user's home directory to /tmp/.
+backup = { $user ->
+    if empty? $user then {
+        $user = whoami
+    } else {
+        if dir? /home/$user then {
+            echo "Request $user user home directory doesn't exist!"
+        }
+    }
+    $input  = "/home/$user"
+    $output = "/tmp/$user_home_$(date +%Y-%m-%d_%H%M%S).tar.gz" 
+
+    total_files = { $dir -> 
+        find $dir -type f | wc -l 
+    }
+
+    total_dirs = { $dir ->
+        find $dir -type d | wc -l
+    }
+
+    total_archived_dirs = { $dir ->
+        tar -tzf $dir | grep /$ | wc -l
+    }
+
+    total_archived_files = { $dir ->
+        tar -tzf $dir | grep -v /$ | wc -l
+    }
+    
+    tar -czf $output $input 2> /dev/null
+    
+    $src_files  = total_files $input
+    $src_dirs   = total_archived_dirs $input
+    $arch_files = total_archived_files $output
+    $arch_dirs  = total_archived_dirs $output
+    
+    echo "########## $user ##########"
+    echo "Files to be included: $src_files"
+    echo "Directories to be included: $src_directories"
+    echo "Files archived: $arch_files"
+    echo "Directories archived: $arch_directories"
+
+    if eq? $src_files $arch_files then {
+        echo "Backup of $input completed!"
+        echo "Details about the output backup file:"
+        ls -l $output
+    } else {
+        echo "Backup of $input failed!"
+    }
+}
+
+$all = 0
+for $* do {
+    backup $directory 
+    $all = math { $all + $arch_files + $arch_dirs }
+}
+echo "TOTAL FILES AND DIRECTORIES: $all"
