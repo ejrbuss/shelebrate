@@ -42,7 +42,7 @@ public class TokenMatcher {
         if (type != null && type != token.type) {
             return false;
         }
-        if (source != null && source != token.source) {
+        if (source != null && !source.equals(token.source)) {
             return false;
         }
         if (pattern != null && !pattern.matcher(token.source).find()) {
@@ -55,7 +55,7 @@ public class TokenMatcher {
     public String toString() {
         return "TokenMatcher(" 
             + (type != null ? type : "*") + ", "
-            + (source != null ? source : (pattern != null ? pattern : "*")) + ")";
+            + (source != null ? "\"" + source + "\"" : (pattern != null ? pattern : "*")) + ")";
     }
 
 }

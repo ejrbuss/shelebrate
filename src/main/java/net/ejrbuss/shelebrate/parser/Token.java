@@ -14,6 +14,11 @@ public final class Token {
         RIGHT_BRACKET,
         LEFT_BRACE,
         RIGHT_BRACE,
+        TERMINATOR;
+
+        public TokenMatcher matcher() {
+            return new TokenMatcher(this);
+        }
     }
 
     public final Type type;
@@ -29,9 +34,7 @@ public final class Token {
         this.position = position;
         this.source = source;
     }
-
-
-
+    
     @Override
     public String toString() {
         return "Token(" 

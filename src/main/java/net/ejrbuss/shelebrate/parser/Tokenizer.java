@@ -10,7 +10,6 @@ public final class Tokenizer {
         return tokenizer.tokenize();
     }
 
-    private static final String EOF = "\0";
     private static final String NEWLINE = "\n";
     private static final String WHITESPACE = " \r\t\f" + NEWLINE;
     private static final String PUNC = "()[]{}";
@@ -41,8 +40,6 @@ public final class Tokenizer {
 
     private boolean tokenizeNext() throws ParserException {
         switch (next()) {
-            case '\0':
-                return false;
             case '$':
                 tokenizeVariable();
                 break;
@@ -84,6 +81,9 @@ public final class Tokenizer {
             case '`':
                 tokenizeStrictString();
             default:
+                if (eof()) {
+                    return false;
+                }
                 tokenizeWord();
                 break;
         }
@@ -91,15 +91,15 @@ public final class Tokenizer {
     }
 
     private void tokenizeVariable() {
-        final String variableTerminators = WHITESPACE + PUNC + QUOTES + SLASHES + EOF;
-        while (!charIn(next(), variableTerminators)) {}
+        final String variableTerminators = WHITESPACE + PUNC + QUOTES + SLASHES;
+        while (!charIn(next(), variableTerminators, true)) {}
         prev();
         addToken(Token.Type.VARIABLE);
     }
 
     private void consumeComment() {
-        final String commentTerminators = NEWLINE + EOF;
-        while (!charIn(next(), commentTerminators)) {}
+        final String commentTerminators = NEWLINE;
+        while (!charIn(next(), commentTerminators, true)) {}
         prev();
         consume();
     }
@@ -110,7 +110,7 @@ public final class Tokenizer {
             char c = next();
             if (escape == true) {
                 escape = false;
-                if (!charIn(c, ESCAPES)) {
+                if (!charIn(c, ESCAPES, false)) {
                     throw new ParserException(
                         ParserException.Type.INVALID_ESCAPE_SEQUENCE, 
                         source, 
@@ -147,16 +147,16 @@ public final class Tokenizer {
     }
 
     private void tokenizeStrictString() {
-        final String strictStringTerminators = "`" + EOF;
-        while (!charIn(next(), strictStringTerminators)) {}
+        final String strictStringTerminators = "`";
+        while (!charIn(next(), strictStringTerminators, true)) {}
         addToken(Token.Type.STRING);
     }
 
     private void tokenizeWord() throws ParserException {
-        final String wordTerminators = WHITESPACE + PUNC + QUOTES + EOF;
+        final String wordTerminators = WHITESPACE + PUNC + QUOTES;
         while (true) {
             char c = next();
-            if (charIn(c, wordTerminators)) {
+            if (charIn(c, wordTerminators, true)) {
                 prev();
                 addToken(Token.Type.WORD);
                 return;
@@ -178,6 +178,7 @@ public final class Tokenizer {
             return;
         }
         prev();
+        consume();
         int parenCount = 0;
         while (true) {
             if (!tokenizeNext()) {
@@ -205,21 +206,22 @@ public final class Tokenizer {
         return position + offset >= source.length();
     }
 
-    private char next() {
+    private char current() {
         if (eof()) {
             return '\0';
         }
-        char next = source.charAt(position + offset);
+        return source.charAt(position + offset);
+    }
+
+    private char next() {
+        char c = current();
         offset++;
-        column++;
-        return next;
+        return c;
     }
 
     private char prev() {
-        char prev = source.charAt(position + offset - 1);
         offset--;
-        column--;
-        return prev;
+        return current();
     }
 
     private void addToken(Token.Type type) {
@@ -241,10 +243,14 @@ public final class Tokenizer {
 
     private void consume() {
         position += offset;
+        column += offset;
         offset = 0;
     }
 
-    private static boolean charIn(char c, String set) {
+    private boolean charIn(char c, String set, boolean includeEof) {
+        if (includeEof && c == '\0') {
+            return true;
+        }
         return set.indexOf(c) != -1;
     }
 

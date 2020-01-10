@@ -26,3 +26,5 @@ target/
 
 .vscode/
 .idea/
+
+*.DS_Store

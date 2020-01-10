@@ -1,0 +1,17 @@
+{
+    # Process will automatically have --version and --help created (and aliased to -v and -h)
+    $path        "Path to create"
+    --mode $mode "Permissions mode for directory"
+    --verbose    "Be verbose"
+    --prefix     "Automatically create prefix directories"
+    ->
+
+    # Set meta-data
+    $VERSION = "0.0.1"
+    $AUTHOR  = "ejrbuss"
+    $HELP    = "create and cd into a directory"
+
+    # Implement
+    mkdir (if $verbose { -v }) (if $prefix { -p }) $path
+    cd (if $verbose { -v }) $path
+}
