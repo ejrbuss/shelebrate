@@ -1,0 +1,1 @@
+java -cp ./target/*.jar net.ejrbuss.shelebrate.Main
