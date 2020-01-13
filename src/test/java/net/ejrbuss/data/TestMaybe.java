@@ -22,6 +22,8 @@ public class TestMaybe {
 
     @Test
     public void testFrom() {
+        assertEquals(Maybe.some(1), Maybe.from(Ref.of(1)));
+        assertEquals(Maybe.none(), Maybe.from(Ref.empty()));
         assertEquals(Maybe.some(1), Maybe.from(Seq.of(1)));
         assertEquals(Maybe.none(), Maybe.from(Seq.empty()));
     }
@@ -52,7 +54,7 @@ public class TestMaybe {
 
     @Test
     public void testHashCode() {
-        assertEquals(Maybe.some(Pair.of(1, 2)).hashCode(), Maybe.some(Pair.of(1, 2)).hashCode());
+        assertEquals(Maybe.some(StrictPair.of(1, 2)).hashCode(), Maybe.some(StrictPair.of(1, 2)).hashCode());
         assertEquals(Maybe.none().hashCode(), Maybe.none().hashCode());
         assertNotEquals(Maybe.some(1).hashCode(), Maybe.some(2).hashCode());
     }

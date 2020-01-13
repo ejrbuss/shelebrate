@@ -24,7 +24,7 @@ public interface Effect2<A, B> {
     }
 
     default Effect<Pair<A, B>> toEffectOfPairs() {
-        return pair -> apply(pair.left, pair.right);
+        return pair -> apply(pair.left(), pair.right());
     }
 
 }

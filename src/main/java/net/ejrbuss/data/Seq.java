@@ -4,30 +4,31 @@ import net.ejrbuss.func.*;
 
 import java.util.*;
 
-@FunctionalInterface
-public interface Seq<A> {
+public interface Seq<A> extends PureSeq<A> {
 
-    // Required methods
+    boolean isEmpty();
 
-    Pair<A, Seq<A>> next();
+    A first();
 
-    // Static Methods
+    Seq<A> rest();
+
+    // static methods
 
     static <A> Seq<A> empty() {
         return Empty.empty();
     }
 
     static <A> Seq<A> of(A a) {
-        return LazySeq.from(() -> Pair.of(a, empty()));
+        return StrictSeq.of(a);
     }
 
     @SafeVarargs
     static <A> Seq<A> of(A... as) {
-        Seq<A> seq = empty();
-        for (A a : as) {
-            seq = seq.append(a);
-        }
-        return seq;
+        return StrictSeq.of(as);
+    }
+
+    static <A> Seq<A> from(Thunk<Pair<A, Seq<A>>> generator) {
+        return LazySeq.from(generator);
     }
 
     static <A> Seq<A> from(Maybe<A> maybe) {
@@ -39,41 +40,37 @@ public interface Seq<A> {
     }
 
     static <A> Seq<A> from(Pair<A, A> pair) {
-        return Seq.of(pair.left, pair.right);
+        return Seq.of(pair.left(), pair.right());
     }
 
-    static <A> Seq<A> continually(Func0<A> supplier) {
-        return LazySeq.from(() -> Pair.of(supplier.apply(), Seq.continually(supplier)));
-    }
-
-    static <A> Seq<A> continually(A a, Func<A, A> generator) {
-        return LazySeq.from(() -> Pair.of(a, Seq.continually(generator.apply(a), generator)));
-    }
-
-    @SafeVarargs
-    static <A> Seq<A> concat(Seq<A>... seqs) {
-        return Variadic.from(empty(), (Func2<Seq<A>, Seq<A>, Seq<A>>) Seq::concat).apply(seqs);
+    static <A> Seq<A> from(List<A> collection) {
+        return StrictSeq.from(collection);
     }
 
     static <A> Seq<A> concat(Seq<A> seq1, Seq<A> seq2) {
         if (seq1.isEmpty()) {
             return seq2;
         }
-        return LazySeq.from(() -> {
-            Pair<A, Seq<A>> pair = seq1.next();
-            return Pair.of(pair.left, Seq.concat(pair.right, seq2));
-        });
+        return LazySeq.from(() -> Pair.of(seq1.first(), Seq.concat(seq1.rest(), seq2)));
+    }
+
+    @SafeVarargs
+    static <A> Seq<A> concat(Seq<A>... sequences) {
+        return Variadic.from(empty(), (Func2<Seq<A>, Seq<A>, Seq<A>>) Seq::concat).apply(sequences);
     }
 
     static <A, B> Seq<Pair<A, B>> zip(Seq<A> seq1, Seq<B> seq2) {
+        return zipWith(Pair::of, seq1, seq2);
+    }
+
+    static <A, B, C> Seq<C> zipWith(Func2<? super A, ? super B, C> combiner, Seq<A> seq1, Seq<B> seq2) {
         if (seq1.isEmpty() || seq2.isEmpty()) {
             return empty();
         }
-        return LazySeq.from(() -> {
-            Pair<A, Seq<A>> pair1 = seq1.next();
-            Pair<B, Seq<B>> pair2 = seq2.next();
-            return Pair.of(Pair.of(pair1.left, pair2.left), Seq.zip(pair1.right, pair2.right));
-        });
+        return LazySeq.from(() -> Pair.of(
+                combiner.apply(seq1.first(), seq2.first()),
+                zipWith(combiner, seq1.rest(), seq2.rest())
+        ));
     }
 
     static Seq<Integer> range(int end) {
@@ -98,24 +95,6 @@ public interface Seq<A> {
         return LazySeq.from(() -> Pair.of(begin, Seq.range(begin + step, end, step)));
     }
 
-    static Seq<Long> range(long end) {
-        return Seq.range(0L, end);
-    }
-
-    static Seq<Long> range(long begin, long end) {
-        return Seq.range(begin, end, 1);
-    }
-
-    static Seq<Long> range(long begin, long end, long step) {
-        if (step > 0 && begin >= end) {
-            return empty();
-        }
-        if (step < 0 && begin <= end) {
-            return empty();
-        }
-        return LazySeq.from(() -> Pair.of(begin, Seq.range(begin + step, end, step)));
-    }
-
     static Seq<Double> range(double begin, double end, double step) {
         if (step > 0 && begin >= end) {
             return empty();
@@ -126,20 +105,27 @@ public interface Seq<A> {
         return LazySeq.from(() -> Pair.of(begin, Seq.range(begin + step, end, step)));
     }
 
-    static <A, B> boolean equals(Seq<A> seq1, Seq<B> seq2) {
-        while (!seq1.isEmpty() && !seq2.isEmpty()) {
-            Pair<A, Seq<A>> pair1 = seq1.next();
-            Pair<B, Seq<B>> pair2 = seq2.next();
-            if (!pair1.left.equals(pair2.left)) {
-                return false;
+    static <A> boolean seqEqual(Seq<A> seq, Object other) {
+        if (other instanceof Seq) {
+            Seq<?> otherSeq = (Seq<?>) other;
+            while (!seq.isEmpty() && !otherSeq.isEmpty()) {
+                if (!seq.first().equals(otherSeq.first())) {
+                    return false;
+                }
+                seq = seq.rest();
+                otherSeq = otherSeq.rest();
             }
-            seq1 = pair1.right;
-            seq2 = pair2.right;
+            return seq.isEmpty() == otherSeq.isEmpty();
         }
-        return seq1.isEmpty() == seq2.isEmpty();
+        return false;
     }
 
     // Default methods
+
+    @Override
+    default Pair<A, PureSeq<A>> next() {
+        return Pair.of(first(), rest());
+    }
 
     default Iterable<A> iter() {
         return () -> {
@@ -154,24 +140,12 @@ public interface Seq<A> {
 
                 @Override
                 public A next() {
-                    Pair<A, Seq<A>> pair = seq.next();
-                    seq = pair.right;
-                    return pair.left;
+                    A element = seq.first();
+                    seq = seq.rest();
+                    return element;
                 }
             };
         };
-    }
-
-    default boolean isEmpty() {
-        return false;
-    }
-
-    default A first() {
-        return next().left;
-    }
-
-    default Seq<A> rest() {
-        return next().right;
     }
 
     default A last() {
@@ -187,105 +161,163 @@ public interface Seq<A> {
             return reverse().nth(-(n + 1));
         }
         int i = 0;
-        for (Seq<A> seq = this; !seq.isEmpty(); seq = seq.rest()) {
-            if (i == n) {
-                return seq.first();
+        for (A element : iter()) {
+            if (i++ == n) {
+                return element;
             }
-            i++;
         }
-        throw new IndexOutOfBoundsException("index: " + n + " bounds " + i);
+        throw new IndexOutOfBoundsException("index: " + n + " bounds: " + i);
     }
 
-    default Seq<A> prepend(A a) {
-        return Seq.concat(Seq.of(a), this);
-    }
-
-    default Seq<A> append(A a) {
-        return Seq.concat(this, Seq.of(a));
-    }
-
-    default void forEach(Effect<? super A> consumer) {
-        forEach((a, _i) -> consumer.apply(a));
-    }
-
-    default void forEach(Effect2<? super A, Integer> consumer) {
-        Pair<A, Seq<A>> p = next();
+    default Seq<A> prepend(A element) {
         Seq<A> seq = this;
+        return LazySeq.from(() -> Pair.of(element, seq));
+    }
+
+    default Seq<A> prependAll(Seq<A> seq) {
+        return concat(seq, this);
+    }
+
+    default Seq<A> append(A element) {
+        Seq<A> seq = this;
+        return LazySeq.from(() -> {
+           if (seq.isEmpty()) {
+               return Pair.of(element, empty());
+           }
+           return Pair.of(first(), rest().append(element));
+        });
+    }
+
+    default <B> Seq<A> takeWhile(B accumulator, Func2<B, ? super A, Pair<B, Boolean>> predicate) {
+        if (isEmpty()) {
+            return empty();
+        }
+        Seq<A> seq = this;
+        Pair<B, Boolean> pair = predicate.apply(accumulator, first());
+        if (!pair.right()) {
+            return Seq.empty();
+        }
+        return LazySeq.from(() ->
+                Pair.of(seq.first(), seq.rest().takeWhile(pair.left(), predicate))
+        );
+    }
+
+    default Seq<A> drop(int n) {
+        if (n < 0) {
+            throw new IllegalArgumentException("n must be >= 0! Found: " + n);
+        }
+        return dropWhile((_element, i) -> i < n);
+    }
+
+    default Seq<A> dropWhile(Func<? super A, Boolean> predicate) {
+        return dropWhile((e, _i) -> predicate.apply(e));
+    }
+
+    default Seq<A> dropWhile(Func2<? super A, Integer, Boolean> predicate) {
+        return dropWhile(0, (i, e) -> Pair.of(i + 1, predicate.apply(e, i)));
+    }
+
+    default <B> Seq<A> dropWhile(B accumulator, Func2<B, ? super A, Pair<B, Boolean>> predicate) {
+        if (isEmpty()) {
+            return empty();
+        }
+        return LazySeq.from(() -> {
+            Pair<B, Boolean> result = predicate.apply(accumulator, first());
+            if (result.right()) {
+                Seq<A> droppedRest = rest().dropWhile(result.left(), predicate);
+                if (droppedRest.isEmpty()) {
+                    return null;
+                }
+                return Pair.of(droppedRest.first(), droppedRest.rest());
+            } else {
+                return Pair.of(first(), rest());
+            }
+        });
+    }
+
+    default void forEach(Effect<? super A> effect) {
+        forEach((element, _i) -> effect.apply(element));
+    }
+
+    default void forEach(Effect2<? super A, Integer> effect) {
         int i = 0;
-        while (!seq.isEmpty()) {
-            Pair<A, Seq<A>> pair = seq.next();
-            consumer.apply(pair.left, i);
-            seq = pair.right;
-            i++;
+        for (A element : iter()) {
+            effect.apply(element, i++);
         }
     }
 
-    default <B> Seq<B> map(Func<? super A, B> transformer) {
-        return map((a, _i) -> transformer.apply(a));
+    default <B> Seq<B> map(Func<? super A, B> transform) {
+        return map((e, _i) -> transform.apply(e));
     }
 
-    default <B> Seq<B> map(Func2<? super A, Integer, B> transformer) {
-        return map(0, transformer);
+    default <B> Seq<B> map(Func2<?super A, Integer, B> transform) {
+        return map(0, (i, e) -> Pair.of(i + 1, transform.apply(e, i)));
     }
 
-    default <B> Seq<B> map(int start, Func2<? super A, Integer, B> transformer) {
+    default <B, C> Seq<B> map(C accumulator, Func2<C, ? super A, Pair<C, B>> transform) {
         if (isEmpty()) {
             return empty();
         }
         return LazySeq.from(() -> {
-            Pair<A, Seq<A>> pair = next();
-            return Pair.of(transformer.apply(pair.left, start), pair.right.map(start + 1, transformer));
+            Pair<C, B> pair2 = transform.apply(accumulator, first());
+            return Pair.of(
+                    pair2.right(),
+                    rest().map(pair2.left(), transform)
+            );
         });
     }
 
-    default <B> Seq<B> flatMap(Func<? super A, Seq<B>> transformer) {
-        return flatMap((a, _i) -> transformer.apply(a));
+    default <B> Seq<B> flatMap(Func<? super  A, Seq<B>> transform) {
+        return flatMap((e, _i) -> transform.apply(e));
     }
 
-    default <B> Seq<B> flatMap(Func2<? super A, Integer, Seq<B>> transformer) {
-        return flatMap(0, transformer);
+    default <B> Seq<B> flatMap(Func2<? super A, Integer, Seq<B>> transform) {
+        return flatMap(0, (i, e) -> Pair.of(i + 1, transform.apply(e, i)));
     }
 
-    default <B> Seq<B> flatMap(int start, Func2<? super A, Integer, Seq<B>> transformer) {
+    default <B, C> Seq<B> flatMap(C accumulator, Func2<C, ? super A, Pair<C, Seq<B>>> transform) {
         if (isEmpty()) {
             return empty();
         }
-        return LazySeq.from(() -> {
-            Pair<A, Seq<A>> pair = next();
-            Seq<B> newSeq = transformer.apply(pair.left, start);
-            Pair<B, Seq<B>> newPair = newSeq.next();
-            return Pair.of(newPair.left, Seq.concat(newPair.right, pair.right.flatMap(start + 1, transformer)));
-        });
-    }
-
-    default Seq<A> filter(Func<A, Boolean> predicate) {
-        return filter((a, _i) -> predicate.apply(a));
-    }
-
-    default Seq<A> filter(Func2<A, Integer, Boolean> predicate) {
-        return filter(0, predicate);
-    }
-
-    default Seq<A> filter(int start, Func2<A, Integer, Boolean> predicate) {
+        Pair<C, Seq<B>> pair = transform.apply(accumulator, first());
+        if (pair.right().isEmpty()) {
+            return rest().flatMap(pair.left(), transform);
+        }
         Seq<A> seq = this;
-        while (!seq.isEmpty()) {
-            Pair<A, Seq<A>> pair = seq.next();
-            if (predicate.apply(pair.left, start)) {
-                return () -> Pair.of(pair.left, pair.right.filter(start + 1, predicate));
+        return LazySeq.from(() -> {
+            Seq<B> seq1 = seq.rest().flatMap(pair.left(), transform);
+            if (seq1.isEmpty()) {
+                return null;
             }
-            seq = pair.right;
-        }
-        return empty();
+            return Pair.of(seq1.first(), seq1.rest());
+        }).prependAll(pair.right());
+    }
+
+    default Seq<A> filter(Func<? super A, Boolean> predicate) {
+        return filter((e, _i) -> predicate.apply(e));
+    }
+
+    default Seq<A> filter(Func2<? super A, Integer, Boolean> predicate) {
+        return filter(0, (i, e) -> Pair.of(i + 1, predicate.apply(e, i)));
+    }
+
+    default <B> Seq<A> filter(B accumulator, Func2<B, ? super A, Pair<B, Boolean>> predicate) {
+        return flatMap(accumulator, (acc, e) -> {
+            Pair<B, Boolean> pair = predicate.apply(acc, e);
+            if (pair.right()) {
+                return Pair.of(pair.left(), Seq.of(e));
+            } else {
+                return Pair.of(pair.left(), empty());
+            }
+        });
     }
 
     default A reduce(Func2<A, ? super A, A> reducer) {
-        Pair<A, Seq<A>> pair = next();
-        return pair.right.reduce(pair.left, reducer);
+        return rest().reduce(first(), (acc, e, _i) -> reducer.apply(acc, e));
     }
 
     default A reduce(Func3<A, ? super A, Integer, A> reducer) {
-        Pair<A, Seq<A>> pair = next();
-        return pair.right.reduce(pair.left, reducer);
+        return rest().reduce(first(), (acc, e, i) -> reducer.apply(acc, e, i + 1));
     }
 
     default <B> B reduce(B accumulator, Func2<B, ? super A, B> reducer) {
@@ -293,13 +325,9 @@ public interface Seq<A> {
     }
 
     default <B> B reduce(B accumulator, Func3<B, ? super A, Integer, B> reducer) {
-        Seq<A> seq = this;
         int i = 0;
-        while (!seq.isEmpty()) {
-            Pair<A, Seq<A>> pair = seq.next();
-            accumulator = reducer.apply(accumulator, pair.left, i);
-            seq = pair.right;
-            i++;
+        for (A element : iter()) {
+            accumulator = reducer.apply(accumulator, element, i++);
         }
         return accumulator;
     }
@@ -321,23 +349,68 @@ public interface Seq<A> {
         if (isEmpty()) {
             return this;
         }
-        Pair<A, Seq<A>> pair = next();
-        return pair.right.reverse().append(pair.left);
+        return rest().reverse().append(first());
     }
 
-    default Seq<A> limit(int n) {
-        if (isEmpty() || n <= 0) {
+    default boolean all(Func<? super A, Boolean> predicate) {
+        for (A a : iter()) {
+            if (!predicate.apply(a)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    default boolean any(Func<? super A, Boolean> predicate) {
+        for (A a : iter()) {
+            if (predicate.apply(a)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    default Seq<A> strict() {
+        return StrictSeq.from(this);
+    }
+
+    default Maybe<Integer> index(A a) {
+        int i = 0;
+        for (A other : iter()) {
+            if (a.equals(other)) {
+                return Maybe.some(i);
+            }
+            i++;
+        }
+        return Maybe.none();
+    }
+
+    default boolean has(A a) {
+        return any(a::equals);
+    }
+
+    default Seq<Seq<A>> chunk(int n) {
+        if (isEmpty()) {
             return empty();
         }
+        Seq<A> seq = this;
         return LazySeq.from(() -> {
-            Pair<A, Seq<A>> pair = next();
-            return Pair.of(pair.left, pair.right.limit(n - 1));
+            Seq<A> seq1 = seq;
+            Seq<A> seq2 = Seq.empty();
+            for (int i = 0; i < n && !seq1.isEmpty(); i++) {
+                seq2 = seq2.append(seq1.first());
+                seq1 = seq1.rest();
+            }
+            return Pair.of(seq2, seq1.chunk(n));
         });
     }
 
-    // TODO
+    default Seq<Pair<A, A>> pairUp() {
+        return chunk(2).takeWhile(e -> e.count() == 2).map(Pair::from);
+    }
+
     default <B extends Comparable<B>> Seq<A> sortBy(Func<A, B> selector) {
-        return null;
+        return StrictSeq.from(this).sortBy(selector);
     }
 
 }

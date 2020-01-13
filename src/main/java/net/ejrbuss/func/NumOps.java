@@ -1,11 +1,11 @@
-package net.ejrbuss.data;
+package net.ejrbuss.func;
 
 import net.ejrbuss.func.Func2;
 import net.ejrbuss.func.Variadic;
 
-public final class NumericOps {
+public final class NumOps {
 
-    private NumericOps() {}
+    private NumOps() {}
 
     public static int add(int a, int b) {
         return a + b;

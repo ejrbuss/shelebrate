@@ -13,7 +13,12 @@ public final class Empty<A> implements Seq<A> {
     private Empty() {}
 
     @Override
-    public Pair<A, Seq<A>> next() {
+    public A first() {
+        throw new EmptyException();
+    }
+
+    @Override
+    public Seq<A> rest() {
         throw new EmptyException();
     }
 
@@ -22,4 +27,8 @@ public final class Empty<A> implements Seq<A> {
         return true;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        return Seq.seqEqual(this, other);
+    }
 }

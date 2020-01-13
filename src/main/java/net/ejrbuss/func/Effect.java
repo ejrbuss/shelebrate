@@ -1,5 +1,7 @@
 package net.ejrbuss.func;
 
+import net.ejrbuss.data.Seq;
+
 @FunctionalInterface
 public interface Effect<A> {
 

@@ -8,11 +8,11 @@ public class TestPair {
 
     @Test
     public void testLeft() {
-        assertEquals(Integer.valueOf(1), Pair.left(Pair.of(1, 2)));
+        assertEquals(Integer.valueOf(1), Pair.leftOf(Pair.of(1, 2)));
     }
     @Test
     public void testRight() {
-        assertEquals(Integer.valueOf(2), Pair.right(Pair.of(1, 2)));
+        assertEquals(Integer.valueOf(2), Pair.rightOf(Pair.of(1, 2)));
     }
 
     @Test
@@ -36,8 +36,9 @@ public class TestPair {
 
     @Test
     public void testEquals() {
-        assertEquals(Pair.of("one", "two"), Pair.of("one", "two"));
-        assertNotEquals(Pair.of(1, 2), Pair.of(2, 1));
+        assertEquals(Pair.of(1, 2), Pair.of(1, 2));
+        assertNotEquals(Pair.of(1, 2), Pair.of(2, 2));
+        assertNotEquals(Pair.of(1, 2), Pair.of(1, 3));
         assertNotEquals(Pair.of(1, 2), Seq.of(1, 2));
     }
 

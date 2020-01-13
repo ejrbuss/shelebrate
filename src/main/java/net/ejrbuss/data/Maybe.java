@@ -21,6 +21,14 @@ public abstract class Maybe<A> {
         return none;
     }
 
+    public static <A> Maybe<A> from(Ref<A> ref) {
+        if (ref.isEmpty()) {
+            return none();
+        } else {
+            return some(ref.get());
+        }
+    }
+
     public static <A> Maybe<A> from(Seq<A> seq) {
         if (seq.isEmpty()) {
             return none();

@@ -5,7 +5,8 @@ A start of the year bash
 
 ```
 // Files
-Seq<Char> charStream = File.at("~/myFile").read();
+FileSystem fs = new VirtualFileSystem();
+Seq<Char> charStream = fs.get("~/myFile").read();
 String contents = charStream.join();
 
 Seq<String> writeStream = MyClass();

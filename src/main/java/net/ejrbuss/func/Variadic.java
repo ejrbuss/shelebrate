@@ -1,6 +1,5 @@
 package net.ejrbuss.func;
 
-import net.ejrbuss.data.NumericOps;
 import net.ejrbuss.data.Seq;
 
 import java.util.ArrayList;

@@ -25,7 +25,7 @@ public interface Func2<A, B, C> extends Func<A, Func<B, C>> {
     }
 
     default Func<Pair<A, B>, C> toFuncOfPairs() {
-        return pair -> apply(pair.left, pair.right);
+        return pair -> apply(pair.left(), pair.right());
     }
 
 }
