@@ -1,7 +1,7 @@
 package net.ejrbuss.data;
 
-import net.ejrbuss.func.Effect2;
-import net.ejrbuss.func.Func2;
+import net.ejrbuss.function.fn.Eff2;
+import net.ejrbuss.function.fn.Fn2;
 
 public interface Pair<A, B> {
 
@@ -13,7 +13,7 @@ public interface Pair<A, B> {
     // static methods
 
     static <A, B> Pair<A, B> of(A left, B right) {
-        return StrictPair.of(left, right);
+        return new StrictPair<>(left, right);
     }
 
     static <A> A leftOf(Pair<A, ?> pair) {
@@ -24,23 +24,26 @@ public interface Pair<A, B> {
         return pair.right();
     }
 
-    static <A> Pair<A, A> from(PureSeq<A> seq) {
-        Pair<A, PureSeq<A>> pair = seq.next();
-        return StrictPair.of(pair.left(), pair.right().first());
+    static <A> Pair<A, A> from(InfSeq<A> seq) {
+        return Pair.of(seq.first(), seq.rest().first());
+    }
+
+    static <A> Pair<A, A> from(Seq<A> seq) {
+        return Pair.of(seq.first(), seq.rest().first());
     }
 
     // default methods
 
-    default <C> C apply(Func2<A, B, C> func) {
-        return func.apply(left(), right());
+    default <C> C apply(Fn2<A, B, C> func) {
+        return func.$(left(), right());
     }
 
-    default void apply(Effect2<A, B> effect) {
-        effect.apply(left(), right());
+    default void apply(Eff2<A, B> effect) {
+        effect.$(left(), right());
     }
 
-    default StrictPair<B, A> swap() {
-        return StrictPair.of(right(), left());
+    default Pair<B, A> swap() {
+        return Pair.of(right(), left());
     }
 
 }

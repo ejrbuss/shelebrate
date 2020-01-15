@@ -1,11 +1,32 @@
-package net.ejrbuss.func;
-
-import net.ejrbuss.func.Func2;
-import net.ejrbuss.func.Variadic;
+package net.ejrbuss.function.fn;
 
 public final class NumOps {
 
     private NumOps() {}
+
+    public static int inc(int a) {
+        return a + 1;
+    }
+
+    public static long inc(long a) {
+        return a + 1;
+    }
+
+    public static double inc(double a) {
+        return a + 1;
+    }
+
+    public static int dec(int a) {
+        return a - 1;
+    }
+
+    public static long dec(long a) {
+        return a - 1;
+    }
+
+    public static double dec(double a) {
+        return a - 1;
+    }
 
     public static int add(int a, int b) {
         return a + b;

@@ -2,14 +2,10 @@ package net.ejrbuss.data;
 
 public final class StrictPair<A, B> implements Pair<A, B> {
 
-    public static <A, B> StrictPair<A, B> of(A left, B right) {
-        return new StrictPair<A, B>(left, right);
-    }
-
     private final A left;
     private final B right;
 
-    private StrictPair(A left, B right) {
+    public StrictPair(A left, B right) {
         this.left = left;
         this.right = right;
     }
@@ -31,9 +27,9 @@ public final class StrictPair<A, B> implements Pair<A, B> {
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof StrictPair) {
-            StrictPair<?, ?> otherPair = (StrictPair<?, ?>) other;
-            return otherPair.left.equals(left) && otherPair.right.equals(right);
+        if (other instanceof Pair) {
+            Pair<?, ?> otherPair = (Pair<?, ?>) other;
+            return otherPair.left().equals(left) && otherPair.right().equals(right);
         }
         return false;
     }
@@ -42,4 +38,5 @@ public final class StrictPair<A, B> implements Pair<A, B> {
     public String toString() {
         return super.toString() + "(" + left + ", " + right + ")";
     }
+
 }

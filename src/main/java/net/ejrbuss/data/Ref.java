@@ -1,7 +1,7 @@
 package net.ejrbuss.data;
 
-import net.ejrbuss.func.Func;
-import net.ejrbuss.func.Thunk;
+import net.ejrbuss.function.fn.Fn;
+import net.ejrbuss.function.fn.Thunk;
 
 public class Ref<A> {
 
@@ -54,7 +54,7 @@ public class Ref<A> {
 
     public A getOrSet(Thunk<A> thunk) {
         if (isEmpty()) {
-            return set(thunk.apply());
+            return set(thunk.$());
         } else {
             return get();
         }
@@ -66,13 +66,13 @@ public class Ref<A> {
         return oldElement;
     }
 
-    public Ref<A> map(Func<A, A> transformer) {
-        this.element = transformer.apply(element);
+    public Ref<A> map(Fn<A, A> transformer) {
+        this.element = transformer.$(element);
         return this;
     }
 
-    public Ref<A> flatMap(Func<A, Ref<A>> transformer) {
-        this.element = transformer.apply(element).get();
+    public Ref<A> flatMap(Fn<A, Ref<A>> transformer) {
+        this.element = transformer.$(element).get();
         return this;
     }
 

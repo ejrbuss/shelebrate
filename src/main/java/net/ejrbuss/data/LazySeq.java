@@ -1,6 +1,6 @@
 package net.ejrbuss.data;
 
-import net.ejrbuss.func.Thunk;
+import net.ejrbuss.function.fn.*;
 
 public class LazySeq<A> implements Seq<A> {
 
@@ -25,22 +25,22 @@ public class LazySeq<A> implements Seq<A> {
 
     @Override
     public boolean isEmpty() {
-        return generator.apply() == null;
+        return generator.$() == null;
     }
 
     @Override
     public A first() {
-        return generator.apply().left();
+        return generator.$().left();
     }
 
     @Override
     public Seq<A> rest() {
-        return generator.apply().right();
+        return generator.$().right();
     }
 
     @Override
     public int hashCode() {
-        return hash.apply();
+        return hash.$();
     }
 
     @Override

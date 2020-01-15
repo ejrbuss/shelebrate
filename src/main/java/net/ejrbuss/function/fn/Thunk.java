@@ -1,12 +1,11 @@
-package net.ejrbuss.func;
+package net.ejrbuss.function.fn;
 
-import net.ejrbuss.data.Maybe;
 import net.ejrbuss.data.Ref;
 
 @FunctionalInterface
 public interface Thunk<A> {
 
-    A apply();
+    A $();
 
     // static methods
 
@@ -16,8 +15,8 @@ public interface Thunk<A> {
 
     // default methods
 
-    default <B> Thunk<B> then(Func<A, B> func) {
-        return () -> func.apply(apply());
+    default <B> Thunk<B> then(Fn<A, B> fn) {
+        return () -> fn.$($());
     }
 
     default Thunk<A> cached() {

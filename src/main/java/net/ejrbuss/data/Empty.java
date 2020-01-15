@@ -1,6 +1,6 @@
 package net.ejrbuss.data;
 
-public final class Empty<A> implements Seq<A> {
+final class Empty<A> implements Seq<A> {
 
     @SuppressWarnings("rawtypes")
     private static final Empty empty = new Empty();
@@ -25,6 +25,11 @@ public final class Empty<A> implements Seq<A> {
     @Override
     public boolean isEmpty() {
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
     }
 
     @Override

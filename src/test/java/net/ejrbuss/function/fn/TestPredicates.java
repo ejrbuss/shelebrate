@@ -1,4 +1,4 @@
-package net.ejrbuss.func;
+package net.ejrbuss.function.fn;
 
 import org.junit.Test;
 
@@ -6,14 +6,14 @@ import static org.junit.Assert.*;
 
 public class TestPredicates {
 
-    public void assertAlways(Func<Boolean, Boolean> always) {
-        assertTrue(always.apply(true));
-        assertTrue(always.apply(false));
+    public void assertAlways(Fn<Boolean, Boolean> always) {
+        assertTrue(always.$(true));
+        assertTrue(always.$(false));
     }
 
-    public void assertNever(Func<Boolean, Boolean> never) {
-        assertFalse(never.apply(true));
-        assertFalse(never.apply(false));
+    public void assertNever(Fn<Boolean, Boolean> never) {
+        assertFalse(never.$(true));
+        assertFalse(never.$(false));
     }
 
     @Test
@@ -36,36 +36,36 @@ public class TestPredicates {
 
     @Test
     public void testEq() {
-        assertTrue(Predicates.eq(true).apply(true));
-        assertFalse(Predicates.eq(true).apply(false));
+        assertTrue(Predicates.eq(true).$(true));
+        assertFalse(Predicates.eq(true).$(false));
     }
 
     @Test
     public void testLt() {
-        assertTrue(Predicates.lt(0).apply(-1));
-        assertFalse(Predicates.lt(0).apply(0));
-        assertFalse(Predicates.lt(0).apply(1));
+        assertTrue(Predicates.lt(0).$(-1));
+        assertFalse(Predicates.lt(0).$(0));
+        assertFalse(Predicates.lt(0).$(1));
     }
 
     @Test
     public void testLte() {
-        assertTrue(Predicates.lte(0).apply(-1));
-        assertTrue(Predicates.lte(0).apply(0));
-        assertFalse(Predicates.lte(0).apply(1));
+        assertTrue(Predicates.lte(0).$(-1));
+        assertTrue(Predicates.lte(0).$(0));
+        assertFalse(Predicates.lte(0).$(1));
     }
 
     @Test
     public void testGt() {
-        assertTrue(Predicates.gt(0).apply(1));
-        assertFalse(Predicates.gt(0).apply(0));
-        assertFalse(Predicates.gt(0).apply(-1));
+        assertTrue(Predicates.gt(0).$(1));
+        assertFalse(Predicates.gt(0).$(0));
+        assertFalse(Predicates.gt(0).$(-1));
     }
 
     @Test
     public void testGte() {
-        assertTrue(Predicates.gte(0).apply(1));
-        assertTrue(Predicates.gte(0).apply(0));
-        assertFalse(Predicates.gte(0).apply(-1));
+        assertTrue(Predicates.gte(0).$(1));
+        assertTrue(Predicates.gte(0).$(0));
+        assertFalse(Predicates.gte(0).$(-1));
     }
 
     @Test
@@ -92,6 +92,14 @@ public class TestPredicates {
         assertAlways(Predicates.or(Predicates::always, Predicates::never));
         assertAlways(Predicates.or(Predicates::never, Predicates::always));
         assertNever(Predicates.or(Predicates::never, Predicates::never));
+    }
+
+    @Test
+    public void testXor() {
+        assertNever(Predicates.xor(Predicates::always, Predicates::always));
+        assertAlways(Predicates.xor(Predicates::always, Predicates::never));
+        assertAlways(Predicates.xor(Predicates::never, Predicates::always));
+        assertNever(Predicates.xor(Predicates::never, Predicates::never));
     }
 
     @Test

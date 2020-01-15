@@ -2,7 +2,7 @@ package net.ejrbuss.data;
 
 import static org.junit.Assert.*;
 
-import net.ejrbuss.func.*;
+import net.ejrbuss.function.fn.*;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -16,7 +16,7 @@ public class TestSeq {
 
     @Test(expected = EmptyException.class)
     public void testEmptyThrows() {
-        Seq.empty().next();
+        Seq.empty().first();
     }
 
     @Test
@@ -81,12 +81,6 @@ public class TestSeq {
                 Seq.of(Pair.of(1, 1), Pair.of(2, 2)),
                 Seq.zip(Seq.of(1, 2), Seq.of(1, 2, 3))
         );
-        /*
-        assertEquals(
-                Seq.range(100),
-                Seq.zip(Seq.range(100), Seq.repeat(Thunk.of("a"))).map(Pair::left)
-        );
-        */
     }
 
     @Test
@@ -109,7 +103,7 @@ public class TestSeq {
     @Test
     public void testIterator() {
         int j = 0;
-        for (int i : Seq.range(100).iter()) {
+        for (int i : Seq.range(100)) {
             assertEquals(j++, i);
         }
         assertEquals(j, 100);
@@ -215,6 +209,7 @@ public class TestSeq {
     @Test
     public void testDrop() {
         assertEquals(Seq.range(5, 10), Seq.range(10).drop(5));
+        assertEquals(Seq.range(5), Seq.range(10).drop(-5));
     }
 
     @Test
@@ -225,7 +220,7 @@ public class TestSeq {
 
     @Test
     public void testForEach() {
-        Seq.range(10).forEach((i, j) -> assertEquals(i, j));
+        Seq.range(10).each((i, j) -> assertEquals(i, j));
     }
 
     @Test
@@ -319,8 +314,8 @@ public class TestSeq {
 
     @Test
     public void testSort() {
-        assertEquals(Seq.of(1, 2, 3), Seq.of(3, 2, 1).sortBy(Func::id));
-        assertEquals(Seq.of("a", "b", "c"), LazySeq.from(Seq.of("b", "a", "c")).sortBy(Func::id));
+        assertEquals(Seq.of(1, 2, 3), Seq.of(3, 2, 1).sortBy(Fn::id));
+        assertEquals(Seq.of("a", "b", "c"), LazySeq.from(Seq.of("b", "a", "c")).sortBy(Fn::id));
     }
 
     @Test

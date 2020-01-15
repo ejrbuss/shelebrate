@@ -54,7 +54,7 @@ public class TestMaybe {
 
     @Test
     public void testHashCode() {
-        assertEquals(Maybe.some(StrictPair.of(1, 2)).hashCode(), Maybe.some(StrictPair.of(1, 2)).hashCode());
+        assertEquals(Maybe.some(Pair.of(1, 2)).hashCode(), Maybe.some(Pair.of(1, 2)).hashCode());
         assertEquals(Maybe.none().hashCode(), Maybe.none().hashCode());
         assertNotEquals(Maybe.some(1).hashCode(), Maybe.some(2).hashCode());
     }

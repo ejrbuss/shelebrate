@@ -1,9 +1,10 @@
 package net.ejrbuss.data;
 
-import net.ejrbuss.func.Func;
+import net.ejrbuss.function.fn.Fn;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public class StrictSeq<A> implements Seq<A> {
@@ -18,7 +19,7 @@ public class StrictSeq<A> implements Seq<A> {
             return (StrictSeq<A>) seq;
         }
         List<A> vec = new ArrayList<A>();
-        for (A a : seq.iter()) {
+        for (A a : seq) {
             vec.add(a);
         }
         return new StrictSeq<A>(vec, 0);
@@ -42,8 +43,8 @@ public class StrictSeq<A> implements Seq<A> {
     }
 
     @Override
-    public Iterable<A> iter() {
-        return () -> list.listIterator(i);
+    public Iterator<A> iterator() {
+        return list.listIterator(i);
     }
 
     @Override
@@ -83,9 +84,9 @@ public class StrictSeq<A> implements Seq<A> {
         throw new IndexOutOfBoundsException("index: " + n + " bounds " + i);
     }
 
-    public <B extends Comparable<B>> Seq<A> sortBy(Func<A, B> selector) {
+    public <B extends Comparable<B>> Seq<A> sortBy(Fn<A, B> selector) {
         List<A> copy = new ArrayList<A>(list);
-        copy.sort((A a, A b) -> selector.apply(a).compareTo(selector.apply(b)));
+        copy.sort((A a, A b) -> selector.$(a).compareTo(selector.$(b)));
         return Seq.from(copy);
     }
 

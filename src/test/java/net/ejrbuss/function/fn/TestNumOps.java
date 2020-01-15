@@ -1,6 +1,5 @@
-package net.ejrbuss.func;
+package net.ejrbuss.function.fn;
 
-import net.ejrbuss.func.NumOps;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -10,6 +9,13 @@ public class TestNumOps {
     @Test
     public void testStandardOperations() {
         double epsilon = 0.001;
+        assertEquals(1, NumOps.inc(0));
+        assertEquals(1L, NumOps.inc(0L));
+        assertEquals(1.0, NumOps.inc(0.0), epsilon);
+
+        assertEquals(-1, NumOps.dec(0));
+        assertEquals(-1L, NumOps.dec(0L));
+        assertEquals(-1.0, NumOps.dec(0.0), epsilon);
 
         assertEquals(3, NumOps.add(1, 2));
         assertEquals(3L, NumOps.add(1L, 2L));
